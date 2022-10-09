@@ -1,5 +1,4 @@
-﻿
-using Pdf2xNet.Infrastructure.Enums;
+﻿using Pdf2xNet.Infrastructure.Enums.Xpdf;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading;

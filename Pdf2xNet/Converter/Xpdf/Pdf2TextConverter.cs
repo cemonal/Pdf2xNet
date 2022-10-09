@@ -1,7 +1,8 @@
-﻿using Pdf2xNet.Infrastructure.Enums;
+﻿using Pdf2xNet.Infrastructure.Enums.Xpdf;
 using Pdf2xNet.Infrastructure.Extensions;
+using Pdf2xNet.Infrastructure.Helpers;
 using Pdf2xNet.Infrastructure.Models.Xpdf;
-using Pdf2xNet.Infrastructure.Utilities;
+using Pdf2xNet.Tools;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -12,25 +13,29 @@ using System.Threading.Tasks;
 
 namespace Pdf2xNet.Converter.Xpdf
 {
-    public sealed class Pdf2TextConverter : BaseXpdfConverter<Pdf2Text>
+    internal class Pdf2TextConverter
     {
-        public Pdf2TextConverter(Pdf2Text options) : base("pdf2text", options)
+        private readonly XpdfUtilities tool;
+
+        public Pdf2TextConverter()
+        {
+            tool = new XpdfUtilities(XpdfTool.Pdf2Text);
+        }
+
+        private List<string> CreateParameters(Pdf2Text options)
         {
             if (options.EndOfLine == null)
             {
-                var os = PlatformUtility.GetOperatingSystem();
+                var os = PlatformHelper.GetOperatingSystem();
 
                 if (os == OSPlatform.OSX)
-                    base.options.EndOfLine = Eol.Mac;
+                    options.EndOfLine = Eol.Mac;
                 else if (os == OSPlatform.Linux)
-                    base.options.EndOfLine = Eol.Unix;
+                    options.EndOfLine = Eol.Unix;
                 else
-                    base.options.EndOfLine = Eol.Dos;
+                    options.EndOfLine = Eol.Dos;
             }
-        }
 
-        protected override List<string> CreateParameters(Pdf2Text options)
-        {
             var args = new List<string>();
 
             if (options.FirstPage > 0) args.Add($"-f {options.FirstPage}");
@@ -58,32 +63,14 @@ namespace Pdf2xNet.Converter.Xpdf
             return args;
         }
 
-        public override async Task<ExitCodes> ExtractAsync([NotNull] string filePath, [NotNull] string outputFile, CancellationToken cancellationToken = default)
+        public async Task<List<string>> ExtractAsync(Pdf2Text options, [NotNull] string filePath, CancellationToken cancellationToken = default)
         {
-            if (!File.Exists(filePath))
-                return ExitCodes.Other;
-
-            const string quote = "\"";
-
-            var parameters = CreateParameters(base.options);
-            parameters.Add(string.Concat(quote, filePath, quote));
-            parameters.Add(string.Concat(quote, outputFile, quote));
-
-            var args = string.Join(" ", parameters);
-
-            return (ExitCodes)await ProcessUtility.Run(base.toolPath, args, base.workingDirectory, cancellationToken);
-        }
-
-        public override async Task<List<string>> ExtractAsync([NotNull] string filePath, CancellationToken cancellationToken = default)
-        {
-            var tempFile = Path.Combine(base.rootTempFolderPath, $"{Path.GetFileNameWithoutExtension(filePath)}-{new DateTimeOffset(DateTime.Now).ToUnixTimeSeconds()}.txt");
+            var rootTempFolderPath = tool.GetRootTempFolderPath();
+            var tempFile = Path.Combine(rootTempFolderPath, $"{Path.GetFileNameWithoutExtension(filePath)}-{new DateTimeOffset(DateTime.Now).ToUnixTimeSeconds()}.txt");
 
             try
             {
-                var result = await ExtractAsync(filePath, tempFile, cancellationToken);
-
-                if (result != ExitCodes.NoError)
-                    throw new Exception($"Exit Code: [{result}] {result.ToDescriptionString()}");
+                await ExtractAsync(options, filePath, tempFile, cancellationToken);
 
                 string? text = await File.ReadAllTextAsync(tempFile, cancellationToken);
 
@@ -103,10 +90,18 @@ namespace Pdf2xNet.Converter.Xpdf
             }
             catch (Exception)
             {
-                if(File.Exists(tempFile))
+                if (File.Exists(tempFile))
                     File.Delete(tempFile);
                 throw;
             }
+        }
+
+        public async Task ExtractAsync(Pdf2Text options, [NotNull] string filePath, [NotNull] string outputPath, CancellationToken cancellationToken = default)
+        {
+            var result = await tool.RunAsyc(CreateParameters(options), filePath, outputPath, cancellationToken);
+
+            if (result != ExitCodes.NoError)
+                throw new Exception($"Exit Code: [{result}] {result.ToDescriptionString()}");
         }
     }
 }

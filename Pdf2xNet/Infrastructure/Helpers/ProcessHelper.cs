@@ -2,16 +2,17 @@
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Pdf2xNet.Infrastructure.Utilities
+namespace Pdf2xNet.Infrastructure.Helpers
 {
-    internal static class ProcessUtility
+    internal static class ProcessHelper
     {
         public static Task<int> Run(string fileName, string arguments, string workingDirectory, CancellationToken cancellationToken)
         {
             var tcs = new TaskCompletionSource<int>();
             var process = CreateNewProcess(fileName, arguments, workingDirectory);
 
-            using (cancellationToken.Register(() => {
+            using (cancellationToken.Register(() =>
+            {
 
                 tcs.TrySetCanceled();
             }))

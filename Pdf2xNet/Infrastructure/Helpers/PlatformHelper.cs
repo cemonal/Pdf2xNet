@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 
-namespace Pdf2xNet.Infrastructure.Utilities
+namespace Pdf2xNet.Infrastructure.Helpers
 {
-    internal static class PlatformUtility
+    internal static class PlatformHelper
     {
         public static OSPlatform GetOperatingSystem()
         {

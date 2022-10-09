@@ -1,4 +1,5 @@
-﻿using Pdf2xNet.Converter.Xpdf;
+﻿using Pdf2xNet.Converter;
+using Pdf2xNet.Converter.Xpdf;
 using Pdf2xNet.Infrastructure.Models.Xpdf;
 using System.IO;
 using System.Reflection;
@@ -131,8 +132,8 @@ class Program
                 EncodingName = "UTF-8"
             };
 
-            var converter = new Pdf2TextConverter(option);
-            var result = await converter.ExtractAsync(file);
+            var xpdfConverter = new XpdfConverter();
+            var result = await xpdfConverter.ConvertToTextAsync(option, file);
 
             Console.WriteLine("\r\n*********************************************************************************");
             Console.WriteLine("Process done!");

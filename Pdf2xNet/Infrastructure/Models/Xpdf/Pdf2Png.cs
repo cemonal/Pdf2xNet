@@ -1,5 +1,4 @@
-﻿
-using Pdf2xNet.Infrastructure.Enums;
+﻿using Pdf2xNet.Infrastructure.Enums.Xpdf;
 using Pdf2xNet.Infrastructure.Interfaces.Models.Xpdf;
 
 namespace Pdf2xNet.Infrastructure.Models.Xpdf
