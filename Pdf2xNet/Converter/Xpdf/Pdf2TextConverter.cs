@@ -1,6 +1,5 @@
 ﻿using Pdf2xNet.Infrastructure.Enums;
 using Pdf2xNet.Infrastructure.Extensions;
-using Pdf2xNet.Infrastructure.Interfaces.Converters;
 using Pdf2xNet.Infrastructure.Models.Xpdf;
 using Pdf2xNet.Infrastructure.Utilities;
 using System;
@@ -13,28 +12,24 @@ using System.Threading.Tasks;
 
 namespace Pdf2xNet.Converter.Xpdf
 {
-    public sealed class Pdf2TextConverter : IXpdfConverter
+    public sealed class Pdf2TextConverter : BaseXpdfConverter<Pdf2Text>
     {
-        private readonly Pdf2Text _options;
-
-        public Pdf2TextConverter(Pdf2Text options)
+        public Pdf2TextConverter(Pdf2Text options) : base("pdf2text", options)
         {
-            _options = options ?? throw new ArgumentNullException(nameof(options));
-
             if (options.EndOfLine == null)
             {
                 var os = PlatformUtility.GetOperatingSystem();
 
                 if (os == OSPlatform.OSX)
-                    options.EndOfLine = Eol.Mac;
+                    base.options.EndOfLine = Eol.Mac;
                 else if (os == OSPlatform.Linux)
-                    options.EndOfLine = Eol.Unix;
+                    base.options.EndOfLine = Eol.Unix;
                 else
-                    options.EndOfLine = Eol.Dos;
+                    base.options.EndOfLine = Eol.Dos;
             }
         }
 
-        private List<string> CreateParameters(Pdf2Text options)
+        protected override List<string> CreateParameters(Pdf2Text options)
         {
             var args = new List<string>();
 
@@ -63,86 +58,55 @@ namespace Pdf2xNet.Converter.Xpdf
             return args;
         }
 
-        public async Task<ExitCodes> ExtractAsync([NotNull] byte[] file, [NotNull] string outputFile, CancellationToken cancellationToken = default)
-        {
-            var tempFolder = Path.Combine(Path.GetTempPath(), "pdf2text");
-
-            if (!Directory.Exists(tempFolder))
-                Directory.CreateDirectory(tempFolder);
-
-            var filePath = Path.Combine(tempFolder, $"{Guid.NewGuid()}-{new DateTimeOffset(DateTime.Now).ToUnixTimeSeconds()}.pdf");
-
-            await File.WriteAllBytesAsync(filePath, file, cancellationToken);
-
-            var result = await ExtractAsync(filePath, outputFile, cancellationToken);
-
-            File.Delete(filePath);
-
-            return result;
-        }
-
-        public async Task<ExitCodes> ExtractAsync([NotNull] string filePath, [NotNull] string outputFile, CancellationToken cancellationToken = default)
+        public override async Task<ExitCodes> ExtractAsync([NotNull] string filePath, [NotNull] string outputFile, CancellationToken cancellationToken = default)
         {
             if (!File.Exists(filePath))
                 return ExitCodes.Other;
 
             const string quote = "\"";
 
-            var parameters = CreateParameters(_options);
+            var parameters = CreateParameters(base.options);
             parameters.Add(string.Concat(quote, filePath, quote));
             parameters.Add(string.Concat(quote, outputFile, quote));
 
-            var toolPath = XpdfUtility.FindPdf2TextTool();
             var args = string.Join(" ", parameters);
 
-            return (ExitCodes)await ProcessUtility.Run(toolPath, args, AppDomain.CurrentDomain.BaseDirectory, cancellationToken);
+            return (ExitCodes)await ProcessUtility.Run(base.toolPath, args, base.workingDirectory, cancellationToken);
         }
 
-        public async Task<List<string>> ExtractAsync(byte[] file, CancellationToken cancellationToken = default)
+        public override async Task<List<string>> ExtractAsync([NotNull] string filePath, CancellationToken cancellationToken = default)
         {
-            var tempFolder = Path.Combine(Path.GetTempPath(), "pdf2text");
+            var tempFile = Path.Combine(base.rootTempFolderPath, $"{Path.GetFileNameWithoutExtension(filePath)}-{new DateTimeOffset(DateTime.Now).ToUnixTimeSeconds()}.txt");
 
-            if (!Directory.Exists(tempFolder))
-                Directory.CreateDirectory(tempFolder);
+            try
+            {
+                var result = await ExtractAsync(filePath, tempFile, cancellationToken);
 
-            var filePath = Path.Combine(tempFolder, $"{Guid.NewGuid()}-{new DateTimeOffset(DateTime.Now).ToUnixTimeSeconds()}.pdf");
+                if (result != ExitCodes.NoError)
+                    throw new Exception($"Exit Code: [{result}] {result.ToDescriptionString()}");
 
-            await File.WriteAllBytesAsync(filePath, file, cancellationToken);
+                string? text = await File.ReadAllTextAsync(tempFile, cancellationToken);
 
-            var result = await ExtractAsync(filePath, cancellationToken);
-
-            File.Delete(filePath);
-
-            return result;
-        }
-
-        public async Task<List<string>> ExtractAsync([NotNull] string filePath, CancellationToken cancellationToken = default)
-        {
-            var tempFolder = Path.Combine(Path.GetTempPath(), "pdf2text");
-
-            if (!Directory.Exists(tempFolder))
-                Directory.CreateDirectory(tempFolder);
-
-            var tempFile = Path.Combine(tempFolder, $"{Path.GetFileNameWithoutExtension(filePath)}-{new DateTimeOffset(DateTime.Now).ToUnixTimeSeconds()}.txt");
-
-            if (File.Exists(tempFile))
                 File.Delete(tempFile);
 
-            var result = await ExtractAsync(filePath, tempFile, cancellationToken);
+                var response = new List<string>();
 
-            if (result != ExitCodes.NoError)
-                throw new Exception($"Exit Code: [{result}] {result.ToDescriptionString()}");
+                if (!string.IsNullOrEmpty(text))
+                {
+                    if (options.NoPageBreaks)
+                        response.AddRange(text.Split('\f', StringSplitOptions.RemoveEmptyEntries));
+                    else
+                        response.Add(text);
+                }
 
-            string? text = await File.ReadAllTextAsync(tempFile, cancellationToken);
-
-            File.Delete(tempFile);
-
-            var response = new List<string>();
-
-            if (!string.IsNullOrEmpty(text))
-                response.AddRange(text.Split('\f', StringSplitOptions.RemoveEmptyEntries));
-
-            return response;
+                return response;
+            }
+            catch (Exception)
+            {
+                if(File.Exists(tempFile))
+                    File.Delete(tempFile);
+                throw;
+            }
         }
     }
 }

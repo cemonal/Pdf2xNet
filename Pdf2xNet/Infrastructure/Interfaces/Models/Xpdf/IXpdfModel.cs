@@ -1,7 +1,7 @@
 ﻿
 namespace Pdf2xNet.Infrastructure.Interfaces.Models.Xpdf
 {
-    public interface IPdf2x
+    public interface IXpdfModel
     {
         int FirstPage { get; set; }
         

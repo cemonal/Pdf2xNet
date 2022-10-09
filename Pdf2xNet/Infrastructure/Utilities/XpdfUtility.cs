@@ -6,22 +6,7 @@ namespace Pdf2xNet.Infrastructure.Utilities
 {
     internal static class XpdfUtility
     {
-        public static string FindPdf2HtmlTool()
-        {
-            return FindTool("pdftohtml");
-        }
-
-        public static string FindPdf2PngTool()
-        {
-            return FindTool("pdftopng");
-        }
-
-        public static string FindPdf2TextTool()
-        {
-            return FindTool("pdftotext");
-        }
-
-        private static string FindTool(string fileName)
+        public static string FindTool(string fileName)
         {
             var os = PlatformUtility.GetOperatingSystem();
             string folder = "Windows";

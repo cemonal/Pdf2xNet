@@ -7,22 +7,16 @@ using System.Threading.Tasks;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading;
-using Pdf2xNet.Infrastructure.Interfaces.Converters;
 using Pdf2xNet.Infrastructure.Enums;
 using Pdf2xNet.Infrastructure.Extensions;
 
 namespace Pdf2xNet.Converter.Xpdf
 {
-    public class Pdf2PngConverter : IXpdfConverter
+    public class Pdf2PngConverter : BaseXpdfConverter<Pdf2Png>
     {
-        private readonly Pdf2Png _options;
+        public Pdf2PngConverter(Pdf2Png options) : base("pdf2png", options) { }
 
-        public Pdf2PngConverter(Pdf2Png options)
-        {
-            _options = options ?? throw new ArgumentNullException(nameof(options));
-        }
-
-        private List<string> CreateParameters(Pdf2Png options)
+        protected override List<string> CreateParameters(Pdf2Png options)
         {
             var args = new List<string>();
 
@@ -48,54 +42,57 @@ namespace Pdf2xNet.Converter.Xpdf
             return args;
         }
 
-        public async Task<ExitCodes> ExtractAsync([NotNull] string filePath, [NotNull] string outputDirectory, CancellationToken cancellationToken = default)
+        public override async Task<ExitCodes> ExtractAsync([NotNull] string filePath, [NotNull] string outputPath, CancellationToken cancellationToken = default)
         {
-            if (!File.Exists(filePath) || !Directory.CreateDirectory(outputDirectory).Exists)
+            if (!File.Exists(filePath) || !Directory.CreateDirectory(outputPath).Exists)
                 return ExitCodes.Other;
 
-            if (outputDirectory[^1] != Path.DirectorySeparatorChar)
-                outputDirectory = string.Concat(outputDirectory, Path.DirectorySeparatorChar);
+            if (outputPath[^1] != Path.DirectorySeparatorChar)
+                outputPath = string.Concat(outputPath, Path.DirectorySeparatorChar);
 
             const string quote = "\"";
 
-            var parameters = CreateParameters(_options);
+            var parameters = CreateParameters(base.options);
             parameters.Add(string.Concat(quote, filePath, quote));
-            parameters.Add(string.Concat(quote, Path.Combine(outputDirectory, Path.GetFileNameWithoutExtension(filePath)), quote));
+            parameters.Add(string.Concat(quote, Path.Combine(outputPath, Path.GetFileNameWithoutExtension(filePath)), quote));
 
-            var toolPath = XpdfUtility.FindPdf2PngTool();
             var args = string.Join(" ", parameters);
 
-            return (ExitCodes)await ProcessUtility.Run(toolPath, args, AppDomain.CurrentDomain.BaseDirectory, cancellationToken);
+            return (ExitCodes)await ProcessUtility.Run(base.toolPath, args, base.workingDirectory, cancellationToken);
         }
 
-        public async Task<List<string>> ExtractAsync([NotNull] string filePath, CancellationToken cancellationToken = default)
+        public override async Task<List<string>> ExtractAsync([NotNull] string filePath, CancellationToken cancellationToken = default)
         {
-            var tempFolder = Path.Combine(Path.GetTempPath(), "pdf2png");
+            var tempFolder = Path.Combine(base.rootTempFolderPath, Guid.NewGuid().ToString());
 
-            if (!Directory.Exists(tempFolder))
-                Directory.CreateDirectory(tempFolder);
-
-            tempFolder = Path.Combine(tempFolder, Guid.NewGuid().ToString());
-
-            var result = await ExtractAsync(filePath, tempFolder, cancellationToken);
-
-            if (result != ExitCodes.NoError)
-                throw new Exception($"Exit Code: [{result}] {result.ToDescriptionString()}");
-
-            var files = Directory.GetFiles(tempFolder, "*.png");
-
-            var convertedResult = new List<string>(files.Count());
-
-            foreach (var file in files)
+            try
             {
-                var bytes = await File.ReadAllBytesAsync(file, cancellationToken);
-                convertedResult.Add(Convert.ToBase64String(bytes));
-                File.Delete(file);
+                var result = await ExtractAsync(filePath, tempFolder, cancellationToken);
+
+                if (result != ExitCodes.NoError)
+                    throw new Exception($"Exit Code: [{result}] {result.ToDescriptionString()}");
+
+                var files = Directory.GetFiles(tempFolder, "*.png");
+
+                var convertedResult = new List<string>(files.Count());
+
+                foreach (var file in files)
+                {
+                    var bytes = await File.ReadAllBytesAsync(file, cancellationToken);
+                    convertedResult.Add(Convert.ToBase64String(bytes));
+                    File.Delete(file);
+                }
+
+                Directory.Delete(tempFolder);
+
+                return convertedResult;
             }
-
-            Directory.Delete(tempFolder);
-
-            return convertedResult;
+            catch (Exception)
+            {
+                if (Directory.Exists(tempFolder))
+                    Directory.Delete(tempFolder);
+                throw;
+            }
         }
     }
 }

@@ -3,7 +3,7 @@ using Pdf2xNet.Infrastructure.Interfaces.Models.Xpdf;
 
 namespace Pdf2xNet.Infrastructure.Models.Xpdf
 {
-    public class Pdf2Html : IPdf2x
+    public class Pdf2Html : IXpdfModel
     {
         /// <summary>
         /// Specifies the first page to convert.

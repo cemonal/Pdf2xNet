@@ -9,7 +9,9 @@ namespace Pdf2xNet.Infrastructure.Interfaces.Converters
 {
     public interface IXpdfConverter
     {
-        Task<ExitCodes> ExtractAsync([NotNull] string filePath, [NotNull] string outputDirectory, CancellationToken cancellationToken = default);
+        Task<ExitCodes> ExtractAsync([NotNull] byte[] file, [NotNull] string outputPath, CancellationToken cancellationToken = default);
+        Task<List<string>> ExtractAsync([NotNull] byte[] file, CancellationToken cancellationToken = default);
+        Task<ExitCodes> ExtractAsync([NotNull] string filePath, [NotNull] string outputPath, CancellationToken cancellationToken = default);
         Task<List<string>> ExtractAsync([NotNull] string filePath, CancellationToken cancellationToken = default);
     }
 }
