@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.3.32901.215
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Pdf2xNet", "Pdf2xNet\Pdf2xNet.csproj", "{1FD697D8-F079-4472-988C-AAA45D9AD412}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pdf2xNet.Demo", "Pdf2xNet.Demo\Pdf2xNet.Demo.csproj", "{22663F39-143F-474B-913C-10ADFFFAC8E2}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{1FD697D8-F079-4472-988C-AAA45D9AD412}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1FD697D8-F079-4472-988C-AAA45D9AD412}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1FD697D8-F079-4472-988C-AAA45D9AD412}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1FD697D8-F079-4472-988C-AAA45D9AD412}.Release|Any CPU.Build.0 = Release|Any CPU
+		{22663F39-143F-474B-913C-10ADFFFAC8E2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{22663F39-143F-474B-913C-10ADFFFAC8E2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{22663F39-143F-474B-913C-10ADFFFAC8E2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{22663F39-143F-474B-913C-10ADFFFAC8E2}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {0FEC1999-CDFE-4B8E-9424-BE59E32E591F}
+	EndGlobalSection
+EndGlobal
