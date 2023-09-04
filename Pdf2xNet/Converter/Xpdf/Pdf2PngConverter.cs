@@ -1,6 +1,7 @@
-﻿using Pdf2xNet.Infrastructure.Enums.Xpdf;
-using Pdf2xNet.Infrastructure.Extensions;
-using Pdf2xNet.Infrastructure.Models.Xpdf;
+﻿using Pdf2xNet.Enums.Xpdf;
+using Pdf2xNet.Extensions;
+using Pdf2xNet.Interfaces.Converters;
+using Pdf2xNet.Models.Xpdf;
 using Pdf2xNet.Tools;
 using System;
 using System.Collections.Generic;
@@ -12,7 +13,10 @@ using System.Threading.Tasks;
 
 namespace Pdf2xNet.Converter.Xpdf
 {
-    internal class Pdf2PngConverter
+    /// <summary>
+    /// A converter class for converting PDF files to PNG images using Xpdf tools.
+    /// </summary>
+    public class Pdf2PngConverter : IDocumentConverter<Pdf2Png>
     {
         private readonly XpdfUtilities tool;
 
@@ -21,6 +25,9 @@ namespace Pdf2xNet.Converter.Xpdf
             tool = new XpdfUtilities(XpdfTool.Pdf2Png);
         }
 
+        /// <summary>
+        /// Creates the command line parameters for the Pdf2Png conversion based on the provided options.
+        /// </summary>
         private List<string> CreateParameters(Pdf2Png options)
         {
             var args = new List<string>();
@@ -47,44 +54,50 @@ namespace Pdf2xNet.Converter.Xpdf
             return args;
         }
 
-        public async Task<List<string>> ExtractAsync(Pdf2Png options, [NotNull] string filePath, CancellationToken cancellationToken = default)
+        /// <summary>
+        /// Converts the PDF file to a list of base64-encoded PNG images asynchronously.
+        /// </summary>
+        public async Task<List<string>> ConvertAsync(Pdf2Png options, [NotNull] string filePath, CancellationToken cancellationToken = default)
         {
             var rootTempFolderPath = tool.GetRootTempFolderPath();
             var tempFolder = Path.Combine(rootTempFolderPath, Guid.NewGuid().ToString());
 
             try
             {
-                await ExtractAsync(options, filePath, tempFolder, cancellationToken);
- 
+                await ConvertAndSaveAsync(options, filePath, tempFolder, cancellationToken);
+
                 var info = new DirectoryInfo(tempFolder);
                 var files = info.GetFiles($"*.png").OrderBy(p => p.CreationTime).ToArray();
 
-                var result = new List<string>(files.Count());
+                var result = new List<string>(files.Length);
 
                 foreach (var file in files)
                 {
-                    var bytes = await File.ReadAllBytesAsync(file.FullName, cancellationToken);
+                    var bytes = await File.ReadAllBytesAsync(file.FullName, cancellationToken).ConfigureAwait(false);
                     result.Add(Convert.ToBase64String(bytes));
                 }
 
-                Directory.Delete(tempFolder);
+                Directory.Delete(tempFolder, true);
 
                 return result;
             }
             catch (Exception)
             {
                 if (Directory.Exists(tempFolder))
-                    Directory.Delete(tempFolder);
+                    Directory.Delete(tempFolder, true);
                 throw;
             }
         }
 
-        public async Task ExtractAsync(Pdf2Png options, [NotNull] string filePath, [NotNull] string outputPath, CancellationToken cancellationToken = default)
+        /// <summary>
+        /// Converts the PDF file to PNG images and saves them to the specified output path asynchronously.
+        /// </summary>
+        public async Task ConvertAndSaveAsync(Pdf2Png options, [NotNull] string filePath, [NotNull] string outputPath, CancellationToken cancellationToken = default)
         {
-            var result = await tool.RunAsyc(CreateParameters(options), filePath, outputPath, cancellationToken);
+            var result = await tool.RunAsyc(CreateParameters(options), filePath, outputPath, cancellationToken).ConfigureAwait(false);
 
             if (result != ExitCodes.NoError)
-                throw new Exception($"Exit Code: [{result}] {result.ToDescriptionString()}");
+                throw new PdfConversionException($"Exit Code: [{result}] {result.ToDescriptionString()}");
         }
     }
 }

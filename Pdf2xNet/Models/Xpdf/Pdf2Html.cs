@@ -1,18 +1,16 @@
-﻿
-using Pdf2xNet.Infrastructure.Interfaces.Models.Xpdf;
+﻿using Pdf2xNet.Interfaces.Models.Xpdf;
 
-namespace Pdf2xNet.Infrastructure.Models.Xpdf
+namespace Pdf2xNet.Models.Xpdf
 {
+    /// <summary>
+    /// Represents options for converting PDF to HTML using Xpdf tools.
+    /// </summary>
     public class Pdf2Html : IXpdfModel
     {
-        /// <summary>
-        /// Specifies the first page to convert.
-        /// </summary>
+        /// <inheritdoc/>
         public int FirstPage { get; set; }
 
-        /// <summary>
-        /// Specifies the last page to convert.
-        /// </summary>
+        /// <inheritdoc/>
         public int LastPage { get; set; }
 
         /// <summary>
@@ -75,14 +73,10 @@ namespace Pdf2xNet.Infrastructure.Models.Xpdf
         /// </summary>
         public bool Table { get; set; }
 
-        /// <summary>
-        /// Specify the owner password for the PDF file. Providing this will bypass all security restrictions.
-        /// </summary>
+        /// <inheritdoc/>
         public string? OwnerPassword { get; set; }
 
-        /// <summary>
-        /// Specify the user password for the PDF file.
-        /// </summary>
+        /// <inheritdoc/>
         public string? UserPassword { get; set; }
     }
 }

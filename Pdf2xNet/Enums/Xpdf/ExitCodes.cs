@@ -1,7 +1,7 @@
 ﻿
 using System.ComponentModel;
 
-namespace Pdf2xNet.Infrastructure.Enums.Xpdf
+namespace Pdf2xNet.Enums.Xpdf
 {
     public enum ExitCodes : ushort
     {

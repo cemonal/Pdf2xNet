@@ -1,10 +1,17 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 
-namespace Pdf2xNet.Infrastructure.Helpers
+namespace Pdf2xNet.Helpers
 {
+    /// <summary>
+    /// Helper class for retrieving information about the current operating system platform.
+    /// </summary>
     internal static class PlatformHelper
     {
+        /// <summary>
+        /// Gets the current operating system platform.
+        /// </summary>
+        /// <returns>The operating system platform.</returns>
         public static OSPlatform GetOperatingSystem()
         {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))

@@ -1,18 +1,17 @@
-﻿using Pdf2xNet.Infrastructure.Enums.Xpdf;
-using Pdf2xNet.Infrastructure.Interfaces.Models.Xpdf;
+﻿using Pdf2xNet.Enums.Xpdf;
+using Pdf2xNet.Interfaces.Models.Xpdf;
 
-namespace Pdf2xNet.Infrastructure.Models.Xpdf
+namespace Pdf2xNet.Models.Xpdf
 {
+    /// <summary>
+    /// Represents the options for converting a PDF file to PNG images using Xpdf tools.
+    /// </summary>
     public class Pdf2Png : IXpdfModel
     {
-        /// <summary>
-        /// Specifies the first page to convert.
-        /// </summary>
+        /// <inheritdoc/>
         public int FirstPage { get; set; }
 
-        /// <summary>
-        /// Specifies the last page to convert.
-        /// </summary>
+        /// <inheritdoc/>
         public int LastPage { get; set; }
 
         /// <summary>
@@ -56,14 +55,10 @@ namespace Pdf2xNet.Infrastructure.Models.Xpdf
         /// </summary>
         public bool VectorAntiAliasing { get; set; } = true;
 
-        /// <summary>
-        /// Specify the owner password for the PDF file. Providing this will bypass all security restrictions.
-        /// </summary>
-        public string? OwnerPassword { get; set; }
+        /// <inheritdoc/>
+        public string OwnerPassword { get; set; }
 
-        /// <summary>
-        /// Specify the user password for the PDF file.
-        /// </summary>
-        public string? UserPassword { get; set; }
+        /// <inheritdoc/>
+        public string UserPassword { get; set; }
     }
 }
